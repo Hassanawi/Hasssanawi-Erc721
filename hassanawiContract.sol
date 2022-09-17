@@ -27,7 +27,11 @@
     uint public publicMintingLimit;
     uint whitelistUserMintCount;
 
-    string baseUri;
+    string baseUri = "https://gateway.pinata.cloud/ipfs/";
+
+        struct mintCount{
+        uint count;
+    }
 
     /**
      *@dev _whiteListedUser stores the address of whitelisted users
@@ -40,9 +44,9 @@
     mapping (address => bool) _admin;
 
     /**
-     *@dev _HassanawiMintCount stores the number of token minted by an address
+     *@dev _HassanawiMintCount stores data of the number of token minted by an address
      */
-    mapping(address =>uint) _HassanawiMintCount; 
+    mapping(address =>mintCount) public _HassanawiMintCount; 
 
  
     error youAreNotAnAdmin();
@@ -65,9 +69,7 @@
      */
     event SetMintingLimit(uint _totalMintLimit , uint _platformMintLimit, uint _whitelistMintLimit);
 
-    constructor() ERC721("hassanawi", "Hsk") {
-      baseUri ="https://gateway.pinata.cloud/ipfs/" ;
-     }
+    constructor() ERC721("hassanawi", "Hsk") {}
     
 
     /**
@@ -201,10 +203,11 @@
       whitelistUserMintingLimit = _whitelistUserMintLimit;
       platformMintingLimit =_platformMintLimit;
       totalMintingLimit = _totalMintLimit;
+      publicMintingLimit = totalMintingLimit-(_whitelistUserMintLimit + _platformMintLimit); 
       emit SetMintingLimit(_totalMintLimit, _platformMintLimit, _whitelistUserMintLimit);
      }
 
-    /**
+    /*
      *@dev updateBaseUri updates the baseUri 
      *onlyAdmin can access this function
      */
@@ -271,6 +274,7 @@
      * onlyAdmin can access the function
      * platformMint must be active
      * platform minting limit has not reached
+     * address has not minted 5 or more than 5 hassanawi tokens
      * - `tokenId` must not exist.
      * `to` address must not be a null address
      *
@@ -291,13 +295,15 @@
       if(platformTokenCount > platformMintingLimit){
         revert mintingLimitReached();
       }
+      if(_HassanawiMintCount[msg.sender].count>=5){
+        revert youHaveReachedYourMintingLimit();
+      }
       if (to == 0x0000000000000000000000000000000000000000){
         revert cantMintToZeroAddress();
       }
       _safeMint(to, tokenId);
       _setTokenURI(tokenId, hash);
-     uint num= _HassanawiMintCount[msg.sender];
-      _HassanawiMintCount[msg.sender]= num++;
+      _HassanawiMintCount[msg.sender].count++;
      }  
 
 
@@ -307,6 +313,7 @@
      * Requirements:
      * onlyWhiteListedUser can access the function
      * whitelistUserMint must be active
+     * address has not minted 5 or more than 5 hassanawi tokens
      * whitelist User Minting   Limit has not reached
      * `to` address must not be a null address
      *
@@ -326,13 +333,15 @@
       if (whitelistUserMintCount > whitelistUserMintingLimit){
         revert mintingLimitReached();
       }
+      if(_HassanawiMintCount[msg.sender].count>=5){
+        revert youHaveReachedYourMintingLimit();
+      }
       if (to == 0x0000000000000000000000000000000000000000){
         revert cantMintToZeroAddress();
       }
       _safeMint(to, tokenId);
       _setTokenURI(tokenId, hash);
-      uint num= _HassanawiMintCount[msg.sender];
-      _HassanawiMintCount[msg.sender]= num++;
+      _HassanawiMintCount[msg.sender].count++;
      }
 
      /**
@@ -362,7 +371,7 @@
       if(publicMintCount > platformMintingLimit){
         revert mintingLimitReached();
       }
-      if(_HassanawiMintCount[msg.sender]>=5){
+      if(_HassanawiMintCount[msg.sender].count>=5){
         revert youHaveReachedYourMintingLimit();
       }
       if (to == 0x0000000000000000000000000000000000000000){
@@ -371,8 +380,7 @@
 
       _safeMint(to, tokenId);
       _setTokenURI(tokenId, hash);
-      uint num= _HassanawiMintCount[msg.sender];
-      _HassanawiMintCount[msg.sender]= num++;
+      _HassanawiMintCount[msg.sender].count++;
      }
 
     /**
